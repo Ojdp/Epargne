@@ -13,7 +13,6 @@ install.packages("httr")
 install.packages("ggplot2")
 # Install if you haven't already
 library(httr)
-
 library(ggsci)
 library(svglite)
 library(openxlsx)
@@ -104,7 +103,7 @@ generate_url <- function(dataset_id, series_key = NULL) {
 # Generate URLs
 
 
-url_AutreEpargne <- generate_url(dataset_id = "CFT", series_key = "CFT.Q.N.FR.W0.S1M.S1.N.A.LE.F29O.T._Z.XDC._T.S.V.N._T")
+url_Comptesaterme <- generate_url(dataset_id = "CFT", series_key = "CFT.Q.N.FR.W0.S1M.S1.N.A.LE.F29O.T._Z.XDC._T.S.V.N._T")
 url_EpargneReglementee <- generate_url(dataset_id = "CFT", series_key = "CFT.Q.N.FR.W0.S1M.S1.N.A.LE.F29R.T._Z.XDC._T.S.V.N._T")
 url_DepotBancairesRemunerees <- generate_url(dataset_id = "CFT", series_key = "CFT.Q.N.FR.W0.S1M.S1.N.A.LE.F29Z.T._Z.XDC._T.S.V.N._T")
 url_NumerairesDepotsAVue <- generate_url(dataset_id = "CFT", series_key = "CFT.Q.N.FR.W0.S1M.S1.N.A.LE.F2A.T._Z.XDC._T.S.V.N._T")
@@ -135,7 +134,7 @@ url_ActionsnoncoteesF <- generate_url(dataset_id = "CFT", series_key = "CFT.Q.S.
 url_AssuranceviesupportF <- generate_url(dataset_id = "CFT", series_key = "CFT.Q.S.FR.W0.S1M.S1.N.A.F.F62._Z._Z.XDC._T.S.V.N._T")
 
 
-AutreEpargne <- fetch_and_process_data(url_AutreEpargne)
+Comptesaterme <- fetch_and_process_data(url_Comptesaterme)
 EpargneReglementee <- fetch_and_process_data(url_EpargneReglementee)
 DepotBancairesRemunerees <- fetch_and_process_data(url_DepotBancairesRemunerees)
 NumerairesDepotsAVue <- fetch_and_process_data(url_NumerairesDepotsAVue)
@@ -176,14 +175,14 @@ ContributionFluxTrim <- fetch_and_process_data(url_ContributionFluxTrim)%>%
 
 # List of data frames
 data_frames_list <- list(
-  AutreEpargne, EpargneReglementee, DepotBancairesRemunerees, NumerairesDepotsAVue,
+  Comptesaterme, EpargneReglementee, DepotBancairesRemunerees, NumerairesDepotsAVue,
   Titresdecreancesdetenuesdirectement,Actionscotees, Actionsnoncotees, OPCmonetaires, AutresPlacements,
   Assuranceviesupport, Assurancevieunitésdecompte, Titresdecreancesdetenuesnondirectement,
   Produitsdefondspropes, Produitsdetaux, PrincipauxPlacementsfinanciers)
 
 
 # Get the names of the dataframes
-df_names <- c("AutreEpargne", "EpargneReglementee", "DepotBancairesRemunerees",
+df_names <- c("Comptesaterme", "EpargneReglementee", "DepotBancairesRemunerees",
               "NumerairesDepotsAVue", "Titresdecreancesdetenuesdirectement", "Actioncotees",
               "Actionsnoncotees", "OPCmonetaires", "AutresPlacements",
               "Assuranceviesupport", "Assurancevieunitésdecompte",
@@ -235,8 +234,8 @@ PPF3<- PPF %>%
          SommeReevaluation = sum(ContributionReevaluation))
 
 PPF4<- PPF %>%
-  filter(date == "2024-01-01")%>%
-  mutate(Inflation = - 2.8,
+  filter(date >= "2024-01-01" & date <= "2024-04-01")%>%
+  mutate(Inflation = - 2.73,
          SommePPF = sum(CroissancePPF)+ Inflation,
          SommeFlux = sum(ContributionFluxTrim),
          SommeReevaluation = sum(ContributionReevaluation))
@@ -324,7 +323,7 @@ data_Epargne <- data_EpargneFi %>%
   Covid = ((Value[date == ("2023-04-01")] - Value[date == ("2019-10-01")]) / Value[date == ("2019-10-01")]) * 100,
   Premier = ((Value[date == "2021-07-01"] - Value[date == "2019-10-01"]) / Value[date == "2019-10-01"]) * 100,
   Deuxieme = ((Value[date == "2022-04-01"] - Value[date == "2021-10-01"]) / Value[date == "2021-10-01"]) * 100,
-  Troisieme = ((Value[date == "2023-04-01"] - Value[date == "2022-10-01"]) / Value[date == "2022-10-01"]) * 100) %>%
+  Troisieme = ((Value[date == "2024-01-01"] - Value[date == "2022-07-01"]) / Value[date == "2022-07-01"]) * 100) %>%
   group_by(date)%>%
   mutate(Part = (Value / Value[Operation == "PrincipauxPlacementsfinanciers"]) * 100)%>%
   group_by(Operation) %>%
@@ -332,7 +331,7 @@ data_Epargne <- data_EpargneFi %>%
          ContributionCovid = Covid * (Part[date=="2019-10-01"])/100,
          ContributionPremier = Premier * (Part[date=="2019-10-01"])/100,
          ContributionDeuxieme = Deuxieme * (Part[date=="2021-10-01"])/100,
-         ContributionTroisieme = Troisieme * (Part[date=="2022-10-01"])/100)
+         ContributionTroisieme = Troisieme * (Part[date=="2022-07-01"])/100)
 
             
 ggplot(data = data_Epargne %>%
@@ -415,7 +414,7 @@ ggsave(filename = "C:/Users/153003/Documents/Epargne/graph4PB.png", plot = graph
 
 graph4PBbis<- data_Epargne %>%
   filter(Operation %in% c("NumerairesetDepot", "Assuranceviesupport", "Actions", "Autre"),
-         date == ("2024-01-01")) %>%
+         date == ("2024-04-01")) %>%
   ggplot(aes(x = 2, y = Value, group= Operation)) +
   geom_bar(aes(fill = Operation), stat = "identity", color="white" ,width = 1) +
   coord_polar(theta = "y", start = 0) +
@@ -498,7 +497,7 @@ draw_label("Source: Banque de France, calculs des auteurs", x = 0.2, y = 0.01, s
 ggsave(filename = "C:/Users/153003/Documents/Epargne/graph6PB.svg", plot = graph5PB, width = 15, height = 8, units = "in")
 ggsave(filename = "C:/Users/153003/Documents/Epargne/graph6PB.png", plot = graph5PB, width = 8, height = 6, units = "in")
 
-
+#pour l'instant je ne peux pas actualiser le T2: 2024 puisqu'il y a pas de donnée pour assurance vie et donc autre est trop gros
 ggplot(data = data_Epargne %>%
                     filter(date == max(date), 
                            Operation %in% c("NumerairesDepotsAVue", "Actioncotees", "Actionsnoncotees", "Assuranceviesupport", "DepotBancairesRemunerees", "Autre"))) +
@@ -523,7 +522,7 @@ geom_text(data = . %>%
     x = "",
     y = "Contribution (pp)"
   ) +
-  scale_x_continuous(breaks = c(1, 2, 3), labels = c("2019:T4-2021:T3", "2021:T4-2022:T2", "2022:T3-2024:T1")) +
+  scale_x_continuous(breaks = c(1, 2, 3), labels = c("2019:T4-2021:T3", "2021:T4-2022:T2", "2022:T3-2024:T2")) +
   theme_ofce(panel.background = element_blank(), text = element_text(family = "Arial")) +
   theme(legend.position = "bottom",
         axis.text.x = element_text(angle = 45, hjust = 1),
@@ -533,23 +532,31 @@ geom_text(data = . %>%
 
 ggsave(filename = "C:/Users/153003/Documents/Epargne/CroissanceEpargne.png", plot = CroissanceEpargne, width = 8, height = 6, units = "in")
 
+
+#problème d'alignement de la ligne Total qui me soule 
+
 ggplot(data = PPF) +
-geom_bar(data = PPF|> filter(Operation %in% c("ContributionReevaluation", "ContributionFluxTrim")),aes(x = as.Date(date), y = Value, fill = Operation), position = "stack", stat = "identity") + 
-  geom_line(data = PPF|> filter(Operation== "CroissancePPF"), aes(x = as.Date(date), y = Value), show.legend = TRUE) +
-  geom_point(data = PPF|> filter(Operation== "CroissancePPF"), aes(x = as.Date(date), y = Value), color = "black", size = 3)+
+  geom_bar(aes(x = as.Date(date), y = ContributionReevaluation, fill = "Réévaluation"), 
+           position = position_stack(reverse = TRUE), stat = "identity") +
+  geom_bar(aes(x = as.Date(date), y = ContributionFluxTrim, fill = "Flux Trim."), 
+           position = position_stack(reverse = TRUE), stat = "identity") +
+  geom_line(aes(x = as.Date(date), y = CroissancePPF), color = "black", size = 1) +  # Ajout de la ligne
+  geom_point(aes(x = as.Date(date), y = CroissancePPF), color = "black", size = 3) +     # Ajout des points
   labs(
     title = "Contributions to Growth",
-    x = "Date",
-    y = "En pp"
+    x = "",
+    y = "En pp",
+    fill = "Contributions",
+    color = "Croissance"
   ) +
   theme_ofce(panel.background = element_blank(), text = element_text(family = "Arial")) +
   theme(legend.position = "bottom") +  
-  scale_x_date(limits = as.Date(c("2020-04-01", "2023-07-01")), date_labels = "%Y-%m-%d") +
-  scale_y_continuous(limits = c(-5, 4), labels = scales::label_number(decimal.mark = ",")) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate x-axis labels for better readability
+  scale_x_date(limits = as.Date(c("2020-04-01", "2024-06-01")), date_labels = "%Y-%m-%d") +
+  scale_y_continuous(limits = c(-6, 4.5), labels = scales::label_number(decimal.mark = ",")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   ggtitle("Taux de croissance trimestrielle et contributions")
 
-
+#ya un soucis je crois et comment est calculée l'inflation PPF4?
 graphPB5_bis<- ggplot(data = PPF1bis) +
     geom_bar(data = . %>% filter(Operation %in% c("Réevaluation", "Flux", "Inflation") & date == "2021-04-01"),
              aes(x = 1, y = Value, fill = Operation), position = "stack", stat = "identity") + 
@@ -565,9 +572,9 @@ graphPB5_bis<- ggplot(data = PPF1bis) +
               aes(x = 2, y = Value +1.2, label = paste0(round(Value, 1), "%")))+
   geom_bar(data = . %>% filter(Operation %in% c("Réevaluation", "Flux", "Inflation") & date == "2024-01-01"),
            aes(x = 3, y = Value, fill = Operation), position = "stack", stat = "identity") + 
-  geom_point(data = . %>% filter(Operation == "SommePPF" & date == "2024-01-01"),
+  geom_point(data = . %>% filter(Operation == "SommePPF" & date == "2024-04-01"),
              aes(x = 3, y = Value), color = "black", size = 3) +
-  geom_text(data = . %>% filter(Operation == "SommePPF" & date == "2024-01-01"),
+  geom_text(data = . %>% filter(Operation == "SommePPF" & date == "2024-04-01"),
             aes(x = 3, y = Value +1.2, label = paste0(round(Value, 1), "%")))+
     labs(
       caption = "Source: Banque de France, calculs des auteurs
@@ -630,6 +637,8 @@ Note : la crise covid se déroule de T4:2019 à T4:2021, la crise inflationniste
 save(list = c("graph_0", "graph_0bis","graph_0ter", "graph_1", "graph_2", "graph_3", "graph_4", "graph_5","graph_6"),
      data_EpargneFi,
      file = "graphiques_epargne.rda")
+
+
 
 
      
